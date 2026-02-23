@@ -1,0 +1,161 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      String   @default("TECHNICIAN") // Stored as string, app handles enum mapping/validation or use proper enum if supported by DB (SQLite supports reduced enums? Prisma handles it). Let's use Enum.
+  branchId  String?
+  branch    Branch?  @relation(fields: [branchId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  lastInventoryDate DateTime? // tracks when the admin last physically checked this technician's tools
+  
+  assignments Assignment[]
+  requests    Request[]
+  assets      Asset[] // Assets currently held by user
+}
+
+model Branch {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  managerId String?
+  
+  users       User[]
+  inventory   Inventory[] // Consumables
+  assets      Asset[]     // Equipment belonging to branch
+  requests    Request[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Tool {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  type        String   // EQUIPMENT, TOOL (Consumable type?)
+  category    String?  // MANUAL, ELECTRIC, etc.
+  // Removed serialNumber from here as it belongs to specific Asset instance
+  imageUrl    String?
+  maintenanceFreq Int? // in days, default frequency for this type of tool
+
+  inventory   Inventory[]
+  assignments Assignment[]
+  assets      Asset[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Inventory {
+  id        String   @id @default(cuid())
+  toolId    String
+  tool      Tool     @relation(fields: [toolId], references: [id])
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  
+  quantity  Int      @default(0)
+  status    String   @default("OPERATIONAL") 
+  
+  // Removed maintenance fields from here, moved to Asset or Maintenance model
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([toolId, branchId])
+}
+
+model Asset {
+  id            String   @id @default(cuid())
+  toolId        String
+  tool          Tool     @relation(fields: [toolId], references: [id])
+  branchId      String
+  branch        Branch   @relation(fields: [branchId], references: [id])
+  assignedToId  String?
+  assignedTo    User?    @relation(fields: [assignedToId], references: [id])
+  
+  serialNumber  String   @unique
+  status        String   @default("OPERATIONAL") // OPERATIONAL, MAINTENANCE, DAMAGED, LOST
+  
+  nextMaintenance DateTime?
+  lastMaintenanceDate DateTime?
+  purchaseDate    DateTime?
+  cost            Float?
+  
+  lastInventoryCheck DateTime? // Tracks when last physical inventory was done (quarterly reminder)
+
+  maintenanceLogs Maintenance[]
+  loans           Assignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Maintenance {
+  id          String   @id @default(cuid())
+  assetId     String
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  
+  date        DateTime @default(now())
+  type        String   // PREVENTIVE, CORRECTIVE
+  description String
+  cost        Float
+  photoUrl    String?
+  expectedFixDate DateTime?
+  resolvedDate    DateTime?
+  status          String    @default("PENDING") // PENDING, COMPLETED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Assignment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  toolId    String
+  tool      Tool     @relation(fields: [toolId], references: [id])
+  assetId   String?  // If it's a specific asset from warehouse
+  asset     Asset?   @relation(fields: [assetId], references: [id])
+  
+  quantity  Int      @default(1)
+  status    String   @default("ACTIVE") // ACTIVE, RETURNED, OVERDUE, REQUESTED
+  type      String   @default("ASSIGNMENT") // ASSIGNMENT (fixed), LOAN (temporary)
+  
+  assignedAt     DateTime  @default(now())
+  returnedAt     DateTime?
+  expectedReturn DateTime? // For loans
+  
+  notes          String?
+}
+
+model Request {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  branchId  String
+  branch    Branch   @relation(fields: [branchId], references: [id])
+  
+  type        String   // REQUEST, DAMAGE_REPORT, LOSS_REPORT, MAINTENANCE_REPORT
+  description String
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED, RESOLVED
+  evidenceUrl String?
+  
+  cost            Float?    @default(0)
+  expectedFixDate DateTime?
+  resolvedDate    DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
