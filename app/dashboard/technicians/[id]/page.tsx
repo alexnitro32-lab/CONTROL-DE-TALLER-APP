@@ -44,8 +44,8 @@ export default async function TechnicianDetailPage({ params }: { params: Promise
 
     // Inventory Maintenance Logic (90 days)
     const NINETY_DAYS_MS = 90 * 24 * 60 * 60 * 1000;
-    const lastCheck = (tech as any).lastInventoryDate ? new Date((tech as any).lastInventoryDate) : null;
-    const nextCheck = lastCheck ? new Date(lastCheck.getTime() + NINETY_DAYS_MS) : null;
+    const lastCheck = (tech as any).lastInventoryDate ? new Date((tech as any).lastInventoryDate) : new Date(tech.createdAt);
+    const nextCheck = new Date(lastCheck.getTime() + NINETY_DAYS_MS);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 

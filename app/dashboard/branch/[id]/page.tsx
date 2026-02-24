@@ -69,8 +69,8 @@ export default async function BranchDashboardPage(props: { params: Promise<{ id:
     ]);
 
     const overdueTechs = branchTechs.filter((t) => {
-        if (!t.lastInventoryDate) return true;
-        return new Date(t.lastInventoryDate) < ninetyDaysAgo;
+        const lastCheck = t.lastInventoryDate ? new Date(t.lastInventoryDate) : new Date(t.createdAt);
+        return lastCheck < ninetyDaysAgo;
     });
 
     // --- Data Processing for Cost History ---

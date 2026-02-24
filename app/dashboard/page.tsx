@@ -45,7 +45,7 @@ async function AdminDashboard() {
         prisma.asset.count({
             where: {
                 OR: [
-                    { lastInventoryCheck: null },
+                    { AND: [{ lastInventoryCheck: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryCheck: { lt: ninetyDaysAgo } }
                 ]
             }
@@ -54,7 +54,7 @@ async function AdminDashboard() {
             where: {
                 role: 'TECHNICIAN',
                 OR: [
-                    { lastInventoryDate: null },
+                    { AND: [{ lastInventoryDate: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryDate: { lt: ninetyDaysAgo } }
                 ]
             }
@@ -74,7 +74,7 @@ async function AdminDashboard() {
         prisma.asset.findMany({
             where: {
                 OR: [
-                    { lastInventoryCheck: null },
+                    { AND: [{ lastInventoryCheck: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryCheck: { lt: ninetyDaysAgo } }
                 ]
             },
@@ -86,7 +86,7 @@ async function AdminDashboard() {
             where: {
                 role: 'TECHNICIAN',
                 OR: [
-                    { lastInventoryDate: null },
+                    { AND: [{ lastInventoryDate: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryDate: { lt: ninetyDaysAgo } }
                 ]
             },
@@ -475,8 +475,8 @@ async function TechnicianDashboard({ userId }: { userId: string }) {
     ]);
 
     const assetsNeedingInventory = myAssets.filter(a => {
-        if (!a.lastInventoryCheck) return true;
-        return now.getTime() - new Date(a.lastInventoryCheck).getTime() > NINETY_DAYS;
+        const lastCheck = a.lastInventoryCheck ? new Date(a.lastInventoryCheck) : new Date(a.createdAt);
+        return now.getTime() - lastCheck.getTime() > NINETY_DAYS;
     });
 
     const branchId = userInfo?.branchId ?? (myAssets[0]?.branchId ?? '');
