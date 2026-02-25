@@ -34,7 +34,10 @@ export default async function BranchDashboardPage(props: { params: Promise<{ id:
     const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
     const [assets, activeRequests, resolvedRequests, pendingMaintenance, completedMaintenance, branchTechs] = await Promise.all([
         prisma.asset.findMany({
-            where: { branchId: branch.id },
+            where: {
+                branchId: branch.id,
+                // Removed assignedToId: { not: null } filter to show taller equipment (Workshop/Taller)
+            },
             include: { tool: true, assignedTo: true }
         }),
         prisma.request.findMany({
@@ -144,7 +147,7 @@ export default async function BranchDashboardPage(props: { params: Promise<{ id:
             <div className="grid gap-4 md:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Equipos (Activos)</CardTitle>
+                        <CardTitle className="text-sm font-medium">Equipos Asignados</CardTitle>
                         <Wrench className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>

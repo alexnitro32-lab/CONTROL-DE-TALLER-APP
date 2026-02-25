@@ -8,12 +8,8 @@ import { AssetActions } from '@/components/assets/asset-actions';
 
 export default async function AssetsPage() {
     const assets = await prisma.asset.findMany({
-        include: {
-            tool: true,
-            branch: true,
-            assignedTo: true
-        },
-        orderBy: { branch: { name: 'asc' } }
+        include: { tool: true, branch: true, assignedTo: true },
+        orderBy: { branch: { name: 'asc' } },
     });
 
     const branches = await prisma.branch.findMany({ select: { id: true, name: true } });

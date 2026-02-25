@@ -13,6 +13,7 @@ export default async function ReportNoveltyPage({ searchParams }: { searchParams
         prisma.asset.findMany({
             include: { tool: true, branch: true },
             where: {
+                assignedToId: { not: null },
                 status: { not: 'MAINTENANCE' },
                 ...(branchId ? { branchId } : {})
             },
