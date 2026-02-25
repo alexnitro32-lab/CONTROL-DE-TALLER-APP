@@ -31,6 +31,14 @@ export default async function WarehousePage(props: { searchParams: Promise<{ bra
                 AND: [
                     { status: 'OPERATIONAL' },
                     { assignedToId: null },
+                    {
+                        tool: {
+                            OR: [
+                                { type: 'TOOL' },
+                                { description: 'Creado automáticamente desde Almacén' }
+                            ]
+                        }
+                    },
                     ...(branchId ? [{ branchId }] : [])
                 ]
             },
@@ -43,7 +51,7 @@ export default async function WarehousePage(props: { searchParams: Promise<{ bra
             }
         }),
         prisma.branch.findMany({ orderBy: { name: 'asc' } }),
-        prisma.tool.findMany({ where: { type: 'EQUIPMENT' }, orderBy: { name: 'asc' } })
+        prisma.tool.findMany({ where: { type: 'TOOL' }, orderBy: { name: 'asc' } })
     ]);
 
     const activeLoans = loans.filter(l => l.status === 'ACTIVE');
@@ -110,7 +118,7 @@ export default async function WarehousePage(props: { searchParams: Promise<{ bra
                         <Clock className="h-4 w-4" /> Control de Préstamos
                     </TabsTrigger>
                     <TabsTrigger value="inventory" className="flex gap-2">
-                        <Box className="h-4 w-4" /> Equipos en Custodia
+                        <Box className="h-4 w-4" /> Herramienta Almacén
                     </TabsTrigger>
                 </TabsList>
 

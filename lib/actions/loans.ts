@@ -123,7 +123,7 @@ export async function registerWarehouseAsset(formData: FormData) {
             tool = await prisma.tool.create({
                 data: {
                     name: toolName.trim(),
-                    type: 'EQUIPMENT',
+                    type: 'TOOL',
                     description: 'Creado automáticamente desde Almacén',
                 }
             });

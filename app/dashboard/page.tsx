@@ -44,6 +44,7 @@ async function AdminDashboard() {
         prisma.maintenance.count({ where: { status: 'PENDING' } }),
         prisma.asset.count({
             where: {
+                tool: { type: 'EQUIPMENT' },
                 OR: [
                     { AND: [{ lastInventoryCheck: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryCheck: { lt: ninetyDaysAgo } }
@@ -73,6 +74,7 @@ async function AdminDashboard() {
         }),
         prisma.asset.findMany({
             where: {
+                tool: { type: 'EQUIPMENT' },
                 OR: [
                     { AND: [{ lastInventoryCheck: null }, { createdAt: { lt: ninetyDaysAgo } }] },
                     { lastInventoryCheck: { lt: ninetyDaysAgo } }

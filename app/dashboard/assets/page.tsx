@@ -6,22 +6,42 @@ import { CreateAssetDialog } from '@/components/assets/create-dialog';
 import { UpdateAssetMaintenanceDate } from '@/components/assets/update-date';
 import { AssetActions } from '@/components/assets/asset-actions';
 
-export default async function AssetsPage() {
+import { BranchFilter } from '@/components/dashboard/branch-filter';
+
+export default async function AssetsPage({ searchParams }: { searchParams: Promise<{ branchId?: string }> }) {
+    const { branchId } = await searchParams;
+
     const assets = await prisma.asset.findMany({
+        where: {
+            AND: [
+                {
+                    tool: {
+                        AND: [
+                            { type: 'EQUIPMENT' },
+                            { description: { not: 'Creado automáticamente desde Almacén' } }
+                        ]
+                    }
+                },
+                ...(branchId ? [{ branchId }] : [])
+            ]
+        },
         include: { tool: true, branch: true, assignedTo: true },
         orderBy: { branch: { name: 'asc' } },
     });
 
-    const branches = await prisma.branch.findMany({ select: { id: true, name: true } });
+    const branches = await prisma.branch.findMany({ select: { id: true, name: true }, orderBy: { name: 'asc' } });
 
     return (
         <div className="space-y-6">
-            <div className="flex w-full items-center justify-between">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold">Equipos de Taller Global</h1>
-                    <p className="text-muted-foreground">Vista general de todos los activos en todas las sedes.</p>
+                    <p className="text-muted-foreground">Vista general de todos los activos operativos.</p>
                 </div>
-                <CreateAssetDialog branches={branches} />
+                <div className="flex flex-wrap items-center gap-3">
+                    <BranchFilter branches={branches} />
+                    <CreateAssetDialog branches={branches} />
+                </div>
             </div>
 
             <div className="rounded-md border bg-white overflow-hidden shadow-sm">

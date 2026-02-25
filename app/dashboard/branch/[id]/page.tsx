@@ -36,7 +36,12 @@ export default async function BranchDashboardPage(props: { params: Promise<{ id:
         prisma.asset.findMany({
             where: {
                 branchId: branch.id,
-                // Removed assignedToId: { not: null } filter to show taller equipment (Workshop/Taller)
+                tool: {
+                    AND: [
+                        { type: 'EQUIPMENT' },
+                        { description: { not: 'Creado automáticamente desde Almacén' } }
+                    ]
+                }
             },
             include: { tool: true, assignedTo: true }
         }),
